@@ -1,0 +1,6 @@
+---
+- name: Install Docker
+  hosts: secops_cluster
+  become: true
+  roles:
+    - docker

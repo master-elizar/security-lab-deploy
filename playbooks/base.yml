@@ -1,0 +1,10 @@
+---
+- name: Base configuration
+  hosts: all
+  become: true
+
+  roles:
+    - base
+    - users
+    - ssh_hardening
+    - firewall

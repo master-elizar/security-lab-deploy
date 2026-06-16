@@ -1,0 +1,31 @@
+---
+- name: Create Suricata directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: ansible
+    group: docker
+    mode: '0775'
+  loop:
+    - "{{ security_dir }}/suricata"
+    - "{{ security_dir }}/suricata/log"
+
+- name: Fail if suricata_interface is not defined
+  ansible.builtin.fail:
+    msg: "suricata_interface is not defined. Check group_vars or facts."
+  when: suricata_interface is not defined or suricata_interface == ""
+
+- name: Deploy Suricata container
+  community.docker.docker_container:
+    name: suricata
+    image: "jasonish/suricata:{{ suricata_version }}"
+    network_mode: host
+    restart_policy: always
+    capabilities:
+      - NET_ADMIN
+      - SYS_NICE
+    volumes:
+      - "{{ security_dir }}/suricata/log:/var/log/suricata"
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: ["-i", "{{ suricata_interface }}"]

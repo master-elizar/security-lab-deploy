@@ -1,0 +1,65 @@
+---
+- name: Create CrowdSec directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: ansible
+    group: docker
+    mode: '0775'
+  loop:
+    - "{{ security_dir }}/crowdsec"
+    - "{{ security_dir }}/crowdsec/config"
+    - "{{ security_dir }}/crowdsec/data"
+
+- name: Remove old parsers/scenarios that may cause crashes
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ security_dir }}/crowdsec/config/parsers"
+    - "{{ security_dir }}/crowdsec/config/scenarios"
+    - "{{ security_dir }}/crowdsec/config/postoverflows"
+    - "{{ security_dir }}/crowdsec/config/contexts"
+
+- name: Wipe CrowdSec data directory to avoid corrupted sqlite DB
+  ansible.builtin.file:
+    path: "{{ security_dir }}/crowdsec/data"
+    state: absent
+  become: yes
+
+- name: Recreate empty data directory
+  ansible.builtin.file:
+    path: "{{ security_dir }}/crowdsec/data"
+    state: directory
+    owner: ansible
+    group: docker
+    mode: '0775'
+
+- name: Deploy fresh acquis.yaml
+  ansible.builtin.copy:
+    content: |
+      filenames:
+        - /var/log/suricata/eve.json
+      labels:
+        type: suricata
+    dest: "{{ security_dir }}/crowdsec/config/acquis.yaml"
+    owner: ansible
+    group: docker
+    mode: '0644'
+
+- name: Deploy CrowdSec container
+  community.docker.docker_container:
+    name: crowdsec
+    image: "crowdsecurity/crowdsec:{{ crowdsec_version }}"
+    restart_policy: always
+    ports:
+      - "6060:6060"
+    env:
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/suricata"
+    volumes:
+      - "{{ security_dir }}/crowdsec/config:/etc/crowdsec"
+      - "{{ security_dir }}/crowdsec/data:/var/lib/crowdsec/data"
+      - "{{ security_dir }}/suricata/log:/var/log/suricata:ro"
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    user: "0"

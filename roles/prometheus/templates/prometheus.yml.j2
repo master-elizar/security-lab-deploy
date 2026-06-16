@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Сбор метрик с самого Prometheus
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Динамический сбор метрик CrowdSec со всех хостов безопасности
+  - job_name: 'crowdsec-metrics'
+    static_configs:
+      - targets:
+        {% for host in groups['security_hosts'] %}
+        - "{{ hostvars[host]['ansible_host'] }}:6060"
+        {% endfor %}

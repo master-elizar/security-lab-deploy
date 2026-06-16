@@ -1,0 +1,7 @@
+---
+- name: Deploy Monitoring Stack
+  hosts: monitoring_hosts
+  become: true
+  roles:
+    - prometheus
+    - grafana

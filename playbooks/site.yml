@@ -1,0 +1,6 @@
+---
+- import_playbook: base.yml
+- import_playbook: docker.yml
+- import_playbook: monitoring.yml
+- import_playbook: security.yml
+- import_playbook: loki.yml

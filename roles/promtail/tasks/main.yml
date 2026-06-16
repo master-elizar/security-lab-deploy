@@ -24,6 +24,5 @@
       - "{{ loki_dir }}/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml"
       - "{{ security_dir }}/suricata/log:/var/log/suricata:ro"
       - "{{ security_dir }}/crowdsec/data:/var/log/crowdsec:ro"
-      - /var/log:/var/log/host:ro
       - /etc/localtime:/etc/localtime:ro
     command: ["-config.file=/etc/promtail/promtail-config.yaml"]

@@ -1,0 +1,4 @@
+---
+loki_version: "3.0.0"
+promtail_version: "3.0.0"
+loki_dir: "/opt/loki"

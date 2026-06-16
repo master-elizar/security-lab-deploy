@@ -1,0 +1,77 @@
+---
+- name: Create Grafana provisioning directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: ansible
+    group: docker
+    mode: '0775'
+  loop:
+    - "{{ monitoring_dir }}/grafana"
+    - "{{ monitoring_dir }}/grafana/provisioning"
+    - "{{ monitoring_dir }}/grafana/provisioning/dashboards"
+    - "{{ monitoring_dir }}/grafana/dashboards"
+    - "{{ monitoring_dir }}/grafana/provisioning/datasources"
+
+- name: Create Grafana data directory with correct container UID ownership
+  ansible.builtin.file:
+    path: "{{ monitoring_dir }}/grafana/data"
+    state: directory
+    owner: "472"
+    group: "472"
+    mode: '0755'
+
+- name: Provision Prometheus DataSource into Grafana
+  ansible.builtin.template:
+    src: datasource.yml.j2
+    dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/prometheus.yml"
+    owner: ansible
+    group: docker
+    mode: '0644'
+
+- name: Deploy Grafana Container via Docker
+  community.docker.docker_container:
+    name: grafana
+    image: "grafana/grafana:{{ grafana_version }}"
+    state: started
+    restart_policy: unless-stopped
+    network_mode: host
+    volumes:
+      - "{{ monitoring_dir }}/grafana/data:/var/lib/grafana"
+      - "{{ monitoring_dir }}/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "{{ monitoring_dir }}/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro"
+    env:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+
+- name: Provision Dashboards config into Grafana
+  ansible.builtin.template:
+    src: dashboards.yml.j2
+    dest: "{{ monitoring_dir }}/grafana/provisioning/dashboards.yml"
+    owner: ansible
+    group: docker
+    mode: '0644'
+
+- name: Copy Official CrowdSec Grafana Dashboard JSON
+  ansible.builtin.copy:
+    src: crowdsec.json
+    dest: "{{ monitoring_dir }}/grafana/dashboards/crowdsec.json"
+    owner: ansible
+    group: docker
+    mode: '0644'
+
+- name: Provision Loki DataSource into Grafana
+  ansible.builtin.template:
+    src: datasource-loki.yml.j2
+    dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/loki.yml"
+    owner: ansible
+    group: docker
+    mode: '0644'
+
+- name: Copy Logs Explorer Dashboard JSON
+  ansible.builtin.copy:
+    src: logs-dashboard.json
+    dest: "{{ monitoring_dir }}/grafana/dashboards/logs-dashboard.json"
+    owner: ansible
+    group: docker
+    mode: '0644'

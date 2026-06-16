@@ -1,0 +1,26 @@
+---
+# Базовая настройка сервера
+
+- name: Обновляем apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Устанавливаем базовые утилиты
+  ansible.builtin.apt:
+    name:
+      - git
+      - curl
+      - vim
+      - htop
+      - tree
+    state: present
+    
+- name: Set system hostname to match Ansible inventory
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Update /etc/hosts with the new hostname
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1 {{ inventory_hostname }}"

@@ -1,0 +1,7 @@
+---
+- name: Deploy Security Stack
+  hosts: security_hosts
+  become: true
+  roles:
+    - suricata
+    - crowdsec

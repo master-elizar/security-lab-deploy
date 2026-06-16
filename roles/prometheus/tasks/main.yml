@@ -1,0 +1,34 @@
+---
+- name: Create Prometheus directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: ansible
+    group: docker
+    mode: '0775'
+  loop:
+    - "{{ monitoring_dir }}/prometheus"
+    - "{{ monitoring_dir }}/prometheus/data"
+
+- name: Deploy Prometheus configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
+    owner: ansible
+    group: docker
+    mode: '0644'
+
+- name: Deploy Prometheus Container via Docker
+  community.docker.docker_container:
+    name: prometheus
+    image: "prom/prometheus:{{ prometheus_version }}"
+    state: started
+    restart_policy: unless-stopped
+    network_mode: host
+    volumes:
+      - "{{ monitoring_dir }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "{{ monitoring_dir }}/prometheus/data:/prometheus"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
