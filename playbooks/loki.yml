@@ -1,0 +1,22 @@
+---
+- name: Deploy Loki Stack
+  hosts: monitoring_hosts
+  become: true
+  roles:
+    - loki
+
+- name: Restart Grafana to pick up Loki datasource
+  hosts: monitoring_hosts
+  become: true
+  tasks:
+    - name: Restart Grafana container
+      community.docker.docker_container:
+        name: grafana
+        state: started
+        restart: yes
+
+- name: Deploy Promtail on security nodes
+  hosts: security_hosts
+  become: true
+  roles:
+    - promtail

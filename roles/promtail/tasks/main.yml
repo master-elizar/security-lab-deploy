@@ -1,0 +1,29 @@
+---
+- name: Create Promtail directories
+  ansible.builtin.file:
+    path: "{{ loki_dir }}/promtail"
+    state: directory
+    owner: ansible
+    group: docker
+    mode: '0775'
+
+- name: Deploy Promtail configuration
+  ansible.builtin.template:
+    src: promtail-config.yaml.j2
+    dest: "{{ loki_dir }}/promtail/promtail-config.yaml"
+    owner: ansible
+    group: docker
+    mode: '0644'
+
+- name: Deploy Promtail container
+  community.docker.docker_container:
+    name: promtail
+    image: "grafana/promtail:{{ promtail_version }}"
+    restart_policy: unless-stopped
+    volumes:
+      - "{{ loki_dir }}/promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml"
+      - "{{ security_dir }}/suricata/log:/var/log/suricata:ro"
+      - "{{ security_dir }}/crowdsec/data:/var/log/crowdsec:ro"
+      - /var/log:/var/log/host:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: ["-config.file=/etc/promtail/promtail-config.yaml"]

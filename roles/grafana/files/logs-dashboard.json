@@ -1,0 +1,19 @@
+{
+  "title": "Security Lab - Logs Explorer",
+  "uid": "logs-explorer",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Suricata Alerts (last hour)",
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{job=\"suricata\"} | json | event_type=\"alert\"",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "Loki" }
+    }
+  ],
+  "schemaVersion": 36
+}
